@@ -1,5 +1,4 @@
-https://colab.research.google.com/drive/1BdtCs1TAOIl3QExcRfjdkAC0n4kwBW2A
-from ultralytics import YOLO
+#### from ultralytics import YOLO
 import cv2
 
 # Load the YOLO model (you can use 'yolov8n.pt' for a lighter model)
