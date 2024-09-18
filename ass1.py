@@ -269,3 +269,51 @@ while True:
 cap.release()
 cv2.destroyAllWindows()
 
+
+
+
+import cvzone
+import cv2
+from ultralytics import YOLO
+import math
+
+# تحميل نموذج YOLO
+model = YOLO('/content/fire.pt')  # استخدم المسار الصحيح للنموذج
+
+# استخدام ملف فيديو أو كاميرا
+cap = cv2.VideoCapture(0)  # استخدم 0 للكاميرا أو استبدله بمسار فيديو
+
+classname = ['fire']
+
+while True:
+    ret, frame = cap.read()
+    if not ret:
+        break
+
+    frame2 = cv2.resize(frame, (1000, 1000))
+    res = model(frame2, stream=True)
+    
+    print(res)  # طباعة النتائج لمراقبتها
+
+    for info in res:
+        boxes = info.boxes
+        for box in boxes:
+            con = box.conf[0]
+            con = math.ceil(con * 100)
+            cla = int(box.cls[0])
+            if con > 30:  # تعديل العتبة
+                x1, y1, x2, y2 = box.xyxy[0]
+                x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
+                cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 0, 0), 5)
+                cvzone.putTextRect(frame,
+                                   f'{classname[cla]} {con}%',
+                                   [x1 + 8, y2 + 100], scale=1.5,
+                                   thickness=2)
+
+    cv2_imshow(frame)  # استخدم cv2_imshow لعرض الصورة في Colab
+    if cv2.waitKey(1) == ord('q'):
+        break
+
+cap.release()
+cv2.destroyAllWindows()
+
