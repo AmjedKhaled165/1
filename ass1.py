@@ -125,3 +125,56 @@ finally:
     camera.release()
     cv2.destroyAllWindows()
 
+
+
+import cv2
+import os
+import time
+from ultralytics import YOLO
+
+# إعداد الدليل الذي ستقوم بتخزين الصور فيه
+save_directory = 'captured_images'
+os.makedirs(save_directory, exist_ok=True)
+
+# تهيئة الكاميرا
+camera = cv2.VideoCapture(0)
+
+# تحقق مما إذا كانت الكاميرا مفتوحة بنجاح
+if not camera.isOpened():
+    print("Error: Could not open camera.")
+    exit()
+
+# تحميل النموذج
+model = YOLO('yolov8n.pt')  # استخدم النموذج المناسب
+
+try:
+    count = 1
+    while True:
+        # التقاط إطار
+        ret, frame = camera.read()
+        if not ret:
+            print("Error: Could not read frame.")
+            break
+
+        # بناء اسم الملف
+        filename = os.path.join(save_directory, f"{count}.jpg")
+
+        # حفظ الصورة
+        cv2.imwrite(filename, frame)
+        print(f"Saved {filename}")
+
+        # تحليل الصورة
+        results = model(filename)
+        results.print()  # طباعة النتائج
+
+        # الانتظار لمدة ثانية قبل التقاط الصورة التالية
+        time.sleep(1)
+        count += 1
+
+except KeyboardInterrupt:
+    print("Capture stopped by user.")
+
+finally:
+    # إطلاق الكاميرا
+    camera.release()
+    cv2.destroyAllWindows()
