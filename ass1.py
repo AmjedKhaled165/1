@@ -178,3 +178,28 @@ finally:
     # إطلاق الكاميرا
     camera.release()
     cv2.destroyAllWindows()
+
+
+
+
+import os
+from PIL import Image
+
+# المسار إلى المجلد الذي يحتوي على الصور
+folder_path = 'path_to_your_folder'
+
+# الحصول على قائمة بالملفات في المجلد
+files = os.listdir(folder_path)
+
+# تصفية الملفات للحصول على الصور وترتيبها
+images = sorted(
+    [f for f in files if f.endswith(('.jpg', '.jpeg', '.png'))],
+    key=lambda x: int(os.path.splitext(x)[0])  # تحويل الاسم إلى عدد صحيح
+)
+
+# عرض الصور
+for image_file in images:
+    image_path = os.path.join(folder_path, image_file)
+    img = Image.open(image_path)
+    img.show()  # هذا سيفتح الصورة في عارض الصور الافتراضي
+
