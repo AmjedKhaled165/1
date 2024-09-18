@@ -77,3 +77,51 @@ while True:
 
 cap.release()
 cv2.destroyAllWindows()
+
+
+
+
+import cv2
+import os
+import time
+
+# Set the directory where you want to save the images
+save_directory = 'captured_images'
+os.makedirs(save_directory, exist_ok=True)
+
+# Initialize the camera
+camera = cv2.VideoCapture(0)
+
+# Check if the camera opened successfully
+if not camera.isOpened():
+    print("Error: Could not open camera.")
+    exit()
+
+try:
+    count = 1
+    while True:
+        # Capture frame-by frame
+        ret, frame = camera.read()
+        if not ret:
+            print("Error: Could not read frame.")
+            break
+
+        # Construct the filename
+        filename = os.path.join(save_directory, f"{count}.jpg")
+
+        # Save the image
+        cv2.imwrite(filename, frame)
+        print(f"Saved {filename}")
+
+        # Wait for one second before capturing the next image
+        time.sleep(1)
+        count += 1
+
+except KeyboardInterrupt:
+    print("Capture stopped by user.")
+
+finally:
+    # Release the camera
+    camera.release()
+    cv2.destroyAllWindows()
+
