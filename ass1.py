@@ -203,3 +203,69 @@ for image_file in images:
     img = Image.open(image_path)
     img.show()  # هذا سيفتح الصورة في عارض الصور الافتراضي
 
+
+from IPython.display import display, Javascript
+import cv2
+import cvzone
+from ultralytics import YOLO
+import math
+
+# تحميل نموذج YOLO
+model = YOLO('/content/best (1).pt')  # استخدم المسار الصحيح للنموذج
+
+# دالة لالتقاط الفيديو من الكاميرا
+def capture_video():
+    js = Javascript('''
+    async function startVideo() {
+        const video = document.createElement('video');
+        video.width = 1000;
+        video.height = 1000;
+        document.body.appendChild(video);
+        const stream = await navigator.mediaDevices.getUserMedia({video: true});
+        video.srcObject = stream;
+        video.play();
+        return video;
+    }
+    startVideo();
+    ''')
+    display(js)
+
+# تشغيل دالة التقاط الفيديو
+capture_video()
+
+# قراءة الفيديو من الكاميرا
+cap = cv2.VideoCapture(0)
+
+classname = ['fire']
+
+while True:
+    ret, frame = cap.read()
+    if not ret:
+        break
+
+    frame2 = cv2.resize(frame, (1000, 1000))
+    res = model(frame2, stream=True)
+
+    for info in res:
+        boxes = info.boxes
+        for box in boxes:
+            con = box.conf[0]
+            con = math.ceil(con * 100)
+            cla = int(box.cls[0])
+            if con > 50:
+                x1, y1, x2, y2 = box.xyxy[0]
+                x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
+                cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 0, 0), 5)
+                cvzone.putTextRect(frame,
+                                   f'{classname[cla]} {con}%',
+                                   [x1 + 8, y2 + 100], scale=1.5,
+                                   thickness=2)
+
+    # عرض الإطار
+    cv2_imshow(frame)  # استخدم cv2_imshow لعرض الصورة في Colab
+    if cv2.waitKey(1) == ord('q'):
+        break
+
+cap.release()
+cv2.destroyAllWindows()
+
