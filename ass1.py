@@ -317,3 +317,60 @@ while True:
 cap.release()
 cv2.destroyAllWindows()
 
+
+import cv2
+import time
+import os
+from ultralytics import YOLO
+
+output_video_path = "output_video.mp4"
+output_images_path = r"C:\Users\amjdk\Downloads\Smart_Attendence_System\test"
+if not os.path.exists(output_images_path):
+    os.makedirs(output_images_path)
+
+cap = cv2.VideoCapture(0)
+fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+out = cv2.VideoWriter(output_video_path, fourcc, 20.0, (640, 480))
+start_time = time.time()
+duration = 20  # مدة التسجيل 20 ثانية
+
+while True:
+    ret, frame = cap.read()
+    if not ret:
+        break
+    out.write(frame)
+    if time.time() - start_time > duration:
+        break
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+cap.release()
+out.release()
+cv2.destroyAllWindows()
+
+model = YOLO(r"C:\Users\amjdk\Downloads\best.pt")  
+cap = cv2.VideoCapture(output_video_path)
+frame_count = 0
+
+while cap.isOpened():
+    ret, frame = cap.read()
+    if not ret:
+        break
+    
+    # تحليل الإطار فقط كل ثانية
+    if frame_count % 20 == 0:  # 20 إطار في الثانية
+        results = model(frame)
+        for result in results:
+            boxes = result.boxes
+            for box in boxes:
+                x1, y1, x2, y2 = box.xyxy[0]  
+                confidence = box.conf[0]       #
+                if confidence > 0.5:
+                    cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (255, 0, 0), 2)
+
+                    img_name = f"{output_images_path}/detected_frame_{frame_count}.jpg"
+                    cv2.imwrite(img_name, frame)  
+
+    frame_count += 1
+
+cap.release()
