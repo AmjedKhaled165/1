@@ -375,3 +375,78 @@ while cap.isOpened():
     frame_count += 1
 
 cap.release()
+
+import cv2
+import time
+import os
+from ultralytics import YOLO
+
+# مسار الفيديو المدمج والصور المخرجة
+output_video_path = "output_combined_video.mp4"
+output_images_path = r"C:\Users\amjdk\Downloads\Smart_Attendence_System\test"
+if not os.path.exists(output_images_path):
+    os.makedirs(output_images_path)
+
+# إعداد الفيديو
+fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+out = cv2.VideoWriter(output_video_path, fourcc, 20.0, (1280, 480))  # 640 * 2 للعرض
+
+# فتح الكاميرتين
+cap1 = cv2.VideoCapture(0)
+cap2 = cv2.VideoCapture(1)
+start_time = time.time()
+duration = 20  # مدة التسجيل 20 ثانية
+
+# تسجيل الفيديو المدمج من الكاميرتين
+while True:
+    ret1, frame1 = cap1.read()
+    ret2, frame2 = cap2.read()
+    
+    if not ret1 or not ret2:
+        break
+    
+    # دمج الإطارين جنبًا إلى جنب
+    combined_frame = cv2.hconcat([frame1, frame2])
+    out.write(combined_frame)
+    
+    if time.time() - start_time > duration:
+        break
+    
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+# إغلاق الكاميرات والفيديو المدمج
+cap1.release()
+cap2.release()
+out.release()
+cv2.destroyAllWindows()
+
+# تحميل النموذج
+model = YOLO(r"C:\Users\amjdk\Downloads\best.pt")
+
+# تشغيل النموذج على الفيديو المدمج واستخراج الإطارات المعترف بها
+cap = cv2.VideoCapture(output_video_path)
+frame_count = 0
+
+while cap.isOpened():
+    ret, frame = cap.read()
+    if not ret:
+        break
+    
+    # تحليل الإطار كل ثانية (20 إطار في الثانية)
+    if frame_count % 20 == 0:
+        results = model(frame)
+        for result in results:
+            boxes = result.boxes
+            for box in boxes:
+                x1, y1, x2, y2 = box.xyxy[0]  
+                confidence = box.conf[0]
+                if confidence > 0.5:
+                    cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (255, 0, 0), 2)
+                    
+                    img_name = f"{output_images_path}/detected_frame_{frame_count}.jpg"
+                    cv2.imwrite(img_name, frame)
+    
+    frame_count += 1
+
+cap.release()
